@@ -609,6 +609,13 @@ When there is a failure authenticating the refresh token, the `gesdinet.refresh_
 
 When there is a failure authenticating the refresh token, the `gesdinet.refresh_token_not_found` event is dispatched with a `Gesdinet\JWTRefreshTokenBundle\Event\RefreshTokenNotFoundEvent` object.
 
+### Refresh Token Created
+
+*NOTE* This event is only available when using the `refresh_jwt` authenticator with Symfony 5.4+.
+
+When the refresh token is created but not persisted to the database yet, the `gesdinet.refresh_token_created` event is dispatched with a `Gesdinet\JWTRefreshTokenBundle\Event\RefreshTokenCreated` object.
+
+
 ## Token Extractor
 
 The bundle provides a `Gesdinet\JWTRefreshTokenBundle\Request\Extractor\ExtractorInterface` to define classes which can read the refresh token from the request.

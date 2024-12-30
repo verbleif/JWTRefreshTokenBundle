@@ -11,6 +11,7 @@ use Gesdinet\JWTRefreshTokenBundle\Tests\Services\UserCreator;
 use Lexik\Bundle\JWTAuthenticationBundle\Event\AuthenticationSuccessEvent;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -43,6 +44,11 @@ class AttachRefreshTokenOnSuccessListenerTest extends TestCase
      */
     private $extractor;
 
+    /**
+     * @var EventDispatcherInterface|MockObject
+     */
+    private $eventDispatcher;
+
     private AttachRefreshTokenOnSuccessListener $attachRefreshTokenOnSuccessListener;
 
     protected function setUp(): void
@@ -51,6 +57,7 @@ class AttachRefreshTokenOnSuccessListenerTest extends TestCase
         $this->requestStack = $this->createMock(RequestStack::class);
         $this->refreshTokenGenerator = $this->createMock(RefreshTokenGeneratorInterface::class);
         $this->extractor = $this->createMock(ExtractorInterface::class);
+        $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
 
         $this->attachRefreshTokenOnSuccessListener = new AttachRefreshTokenOnSuccessListener(
             $this->refreshTokenManager,
@@ -61,6 +68,7 @@ class AttachRefreshTokenOnSuccessListenerTest extends TestCase
             $this->refreshTokenGenerator,
             $this->extractor,
             [],
+            $this->eventDispatcher,
             self::RETURN_EXPIRATION,
             self::RETURN_EXPIRATION_PARAMETER_NAME
         );
@@ -159,6 +167,7 @@ class AttachRefreshTokenOnSuccessListenerTest extends TestCase
             $this->refreshTokenGenerator,
             $this->extractor,
             ['enabled' => true],
+            $this->eventDispatcher,
             self::RETURN_EXPIRATION,
             self::RETURN_EXPIRATION_PARAMETER_NAME
         ))->attachRefreshToken($event);

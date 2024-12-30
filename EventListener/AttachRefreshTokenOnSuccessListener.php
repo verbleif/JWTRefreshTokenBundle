@@ -11,11 +11,13 @@
 
 namespace Gesdinet\JWTRefreshTokenBundle\EventListener;
 
+use Gesdinet\JWTRefreshTokenBundle\Event\RefreshTokenCreatedEvent;
 use Gesdinet\JWTRefreshTokenBundle\Generator\RefreshTokenGeneratorInterface;
 use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenInterface;
 use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
 use Gesdinet\JWTRefreshTokenBundle\Request\Extractor\ExtractorInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Event\AuthenticationSuccessEvent;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -63,6 +65,7 @@ class AttachRefreshTokenOnSuccessListener
     protected bool $returnExpiration;
 
     protected string $returnExpirationParameterName;
+    private EventDispatcherInterface $eventDispatcher;
 
     /**
      * @param int    $ttl
@@ -78,6 +81,7 @@ class AttachRefreshTokenOnSuccessListener
         RefreshTokenGeneratorInterface $refreshTokenGenerator,
         ExtractorInterface $extractor,
         array $cookieSettings,
+        EventDispatcherInterface $eventDispatcher,
         bool $returnExpiration = false,
         string $returnExpirationParameterName = 'refresh_token_expiration'
     ) {
@@ -100,6 +104,7 @@ class AttachRefreshTokenOnSuccessListener
         ], $cookieSettings);
         $this->returnExpiration = $returnExpiration;
         $this->returnExpirationParameterName = $returnExpirationParameterName;
+        $this->eventDispatcher = $eventDispatcher;
 
         if ($this->cookieSettings['partitioned'] && Kernel::VERSION < '6.4') {
             throw new \LogicException(sprintf('The `partitioned` option for cookies is only available for Symfony 6.4 and above. You are currently on version %s', Kernel::VERSION));
@@ -144,6 +149,9 @@ class AttachRefreshTokenOnSuccessListener
             }
         } else {
             $refreshToken = $this->refreshTokenGenerator->createForUserWithTtl($user, $this->ttl);
+
+            $refreshTokenEvent = new RefreshTokenCreatedEvent($refreshToken);
+            $this->eventDispatcher->dispatch($refreshTokenEvent, 'gesdinet.refresh_token_created');
 
             $this->refreshTokenManager->save($refreshToken);
             $refreshTokenString = $refreshToken->getRefreshToken();
